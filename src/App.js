@@ -99,7 +99,7 @@ class App extends Component {
     const ChatBubble = (event, i, className) => {
       return (
           <div>
-            <div key={'${className}-${i}'} className={'${className} chat-bubble'}>
+            <div key={`${className}-${i}`} className={`${className} chat-bubble`}>
               <span className="chat-content">{event.text}</span>
             </div>
           </div>
