@@ -20,7 +20,7 @@ class App extends Component {
   }
 
   startListenerWebSocketClient() {
-    this.listenSocket = new WebSocket("ws://localhost:1880/public/messagepublish");
+    this.listenSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/public/messagepublish");
     this.listenSocket.onopen = () => {
       console.log('connected')
     }
@@ -42,7 +42,7 @@ class App extends Component {
 
   }
   startPublisherWebSocketClient() {
-    this.publishSocket = new WebSocket("ws://localhost:1880/public/messagereceive");
+    this.publishSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/public/messagereceive");
 
     this.publishSocket.onopen = () => {
       console.log('connected');
