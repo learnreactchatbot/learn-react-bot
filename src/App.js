@@ -10,9 +10,13 @@ class App extends Component {
     super(props);
     this.state = {
       userMessage: '',
-	  conversation: []
+	  conversation: [],
+        userId : new Date().getTime(),
+        toEmailModalOpen : false
     };
   }
+
+
 
   componentDidMount() {
     this.startListenerWebSocketClient();
@@ -20,29 +24,48 @@ class App extends Component {
   }
 
   startListenerWebSocketClient() {
-    this.listenSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/public/messagepublish");
+    this.listenSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/publish");
     this.listenSocket.onopen = () => {
       console.log('connected')
     }
-    this.listenSocket.onmessage = event => {
-      const msg = {
-        text: event.data.trim(),
-        user: 'ai'
-      };
-      this.setState({
-        conversation: [...this.state.conversation, msg]
-      });
-      this.listenSocket.onclose = () => {
-        console.log('disconnected');
-        this.listenSocket=null;
-        // automatically try to reconnect on connection loss
-         this.startListenerWebSocketClient();
+    function convertToMessage(str) {
+          let convertedMessage='';
+          if(typeof str == 'string') {
+              convertedMessage=str;
+          } else {
+              try {
+                  let tempstr=JSON.stringify(str);
+                  JSON.parse(tempstr);
+                  convertedMessage=tempstr;
+              } catch (e) {
+                  convertedMessage=str;
+              }
+          }
+          return convertedMessage;
       }
-    }
-
+    this.listenSocket.onmessage = event => {
+        let response=JSON.parse(event.data.trim());
+        if(response.userId === this.state.userId) {
+            let message=response.data;
+            const msg = {
+                text: convertToMessage(message),
+                user: 'ai'
+            };
+            this.setState({
+                conversation: [...this.state.conversation, msg],
+            });
+        }
+      }
+      this.listenSocket.onclose = () => {
+          console.log('disconnected');
+          this.listenSocket=null;
+          // automatically try to reconnect on connection loss
+          this.startListenerWebSocketClient();
+      }
   }
+
   startPublisherWebSocketClient() {
-    this.publishSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/public/messagereceive");
+    this.publishSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/receive");
 
     this.publishSocket.onopen = () => {
       console.log('connected');
@@ -62,8 +85,8 @@ class App extends Component {
   }
   submitMessage = messageString => {
     // on submitting the ChatInput form, send the message, add it to the list and reset the input
-    const message = { channelType: 'chatbot', message: messageString }
-    this.publishSocket.send(JSON.stringify(message));
+      const message = { channelType: 'chatbot', message: messageString, userId: this.state.userId }
+      this.publishSocket.send(JSON.stringify(message));
   }
   handleChange = event => {
     this.setState({ userMessage: event.target.value });
@@ -90,12 +113,25 @@ class App extends Component {
   };
 
 
-  sendEmail(conversation, publisher) {
-    const message = { channelType: 'email', message: conversation, subject: 'Chat History', to:'lionelpannaisamy@gmail.com;tamilselvam.r@gmail.com;rk@softonics.in' };
-    console.log(JSON.stringify(message));
+  sendEmail(conversation, publisher, toEmail) {
+      const message = { channelType: 'email', message: conversation, subject: 'Chat History', to:toEmail };
+      this.setState({toEmailModalOpen: false});
     publisher.send(JSON.stringify(message));
   }
   render() {
+      const handleEmailModalClick = (toEmailModalOpen) => {
+          this.setState({toEmailModalOpen: toEmailModalOpen, toEmailAddress : ''});
+      }
+      const handleToEmailAddressChange = event => {
+          this.setState({ toEmailAddress: event.target.value });
+      };
+      const responseFacebook = (response) => {
+          console.log(response);
+      }
+
+      const responseGoogle = (response) => {
+          console.log(response);
+      }
     const ChatBubble = (event, i, className) => {
       return (
           <div>
@@ -110,6 +146,8 @@ class App extends Component {
     const chat = this.state.conversation.map((e, index) =>
       ChatBubble(e, index, e.user)
     );
+      const closeIcon=require('./error.png');
+      const mailIdIcon=require('./icons8-send-mail-100 (1).png')
     const mailIcon=require('./icons8-send-mail-100.png');
     return (
         <div>
@@ -119,8 +157,28 @@ class App extends Component {
               {/*   */}
               <div className="interior">
 
-                <img className="mail-box" alt='' onClick={() => this.sendEmail(this.state.conversation, this.publishSocket)} src={mailIcon} title="Send Conversation"/>
+                  <div>
+                      <img className="mailId-box" src={mailIdIcon} title="Enter Your Mail" onClick={() => handleEmailModalClick(true)} />
+                  </div>
                </div>
+                {this.state.toEmailModalOpen ? (
+                    <div id="open-modal" className="modal-window" >
+                        <div className="modal-window-div">
+                            <a href="#" title="Close" className="modal-close"><img className="close-icon" onClick={() => handleEmailModalClick(false)} src={closeIcon}/></a>
+                            <form className="form">
+                                <input type="text" className="form__field" placeholder="Your E-Mail Address" value={this.state.toEmailAddress}
+                                       onInput={handleToEmailAddressChange}
+                                />
+
+
+                                <button type="button" onClick={() => this.sendEmail(this.state.conversation, this.publishSocket, this.state.toEmailAddress)} className="btn btn--primary btn--inside uppercase">Send</button>
+                                <button type="button" onClick={() => handleEmailModalClick(false)} className="btn btn--danger btn--inside uppercase">Close</button>
+                            </form>
+                        </div>
+                    </div>
+                ) : (
+                    ''
+                )}
               </div>
             <ScrollToBottom className="conversation-view ">
               <div  id={'chathistory'}>{chat}</div>

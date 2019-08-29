@@ -1,0 +1,561 @@
+[
+  {
+    "id": "125f39db.0fb4a6",
+    "type": "tab",
+    "label": "Websocket",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "e5625cf0.fc3e5",
+    "type": "websocket in",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "server": "c0fb4b0b.8e7938",
+    "client": "",
+    "x": 110,
+    "y": 80,
+    "wires": [
+      [
+        "28c52e0d.ededa2"
+      ]
+    ]
+  },
+  {
+    "id": "28c52e0d.ededa2",
+    "type": "json",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "property": "payload",
+    "action": "",
+    "pretty": false,
+    "x": 270,
+    "y": 80,
+    "wires": [
+      [
+        "2fd00487.9da3cc"
+      ]
+    ]
+  },
+  {
+    "id": "2ecab1c7.ac810e",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "return {\n    payload: msg.payload.message.message,\n    userId: msg.payload.userId\n};",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 290,
+    "y": 160,
+    "wires": [
+      [
+        "ebc158ef.02f548"
+      ]
+    ]
+  },
+  {
+    "id": "c8a5079d.8c91a8",
+    "type": "websocket out",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "server": "d0d35c36.acfd1",
+    "client": "",
+    "x": 810,
+    "y": 320,
+    "wires": []
+  },
+  {
+    "id": "a4138c85.54802",
+    "type": "http request",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "method": "GET",
+    "ret": "obj",
+    "url": "http://api.openweathermap.org/data/2.5/weather?q={{city}}&appid=2ffbebbb851fb9abc0bb280f3659f86c",
+    "tls": "",
+    "x": 690,
+    "y": 240,
+    "wires": [
+      [
+        "fa9d6ef.3a4a89"
+      ]
+    ]
+  },
+  {
+    "id": "2fd00487.9da3cc",
+    "type": "switch",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "property": "payload.channelType",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "chatbot",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "email",
+        "vt": "str"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 110,
+    "y": 180,
+    "wires": [
+      [
+        "2ecab1c7.ac810e"
+      ],
+      [
+        "7269d0ea.d5b73"
+      ]
+    ]
+  },
+  {
+    "id": "289dc747.937788",
+    "type": "e-mail",
+    "z": "125f39db.0fb4a6",
+    "server": "smtp.gmail.com",
+    "port": "465",
+    "secure": true,
+    "name": "",
+    "dname": "SendEmail",
+    "x": 290,
+    "y": 320,
+    "wires": []
+  },
+  {
+    "id": "7269d0ea.d5b73",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var messagearr=msg.payload.message;\nvar body = '';\nfunction isJson(str) {\n    try {\n        JSON.parse(str);\n    } catch (e) {\n        return false;\n    }\n    return true;\n}\n\nfunction getJSONHTMLContent(conversationJson) {\n    let conversationhtml;\n            Object.keys(conversationJson).forEach(function(key) {\n                    conversationhtml=conversationhtml + \"<div>\" +key+ \":\" + conversationJson[key] + \"</div>\";\n            });\n            return conversationhtml;\n}\n\nif(messagearr.length>0) {\n    for(let i=0;i<messagearr.length;i++) {\n        let conversationItem=messagearr[i];\n        let isJson;\n        try {\n            JSON.parse(conversationItem['text']);\n            isJson=true;\n        } catch (e) {\n            isJson=false;\n        }\n        if(isJson) {\n            body=body + \"<div style=\\\"color:red;\\\">\" +conversationItem['user']+\"</div>\";\n            let conversationJson = JSON.parse(conversationItem['text']);\n            body = body + '<table style=\"width:100%; border:1px solid black; text-align: center\">';\n            let tableHeader = '';\n            let conversationhtml = '';\n            let foundTableHeader=false;\n            for (let i=0 ; i<conversationJson.length;i++) {\n                let item=conversationJson[i];\n                conversationhtml = conversationhtml + \"<tr>\";\n                Object.keys(item).forEach(function(key) {\n                    if(!foundTableHeader) {\n                        tableHeader = tableHeader + \"<th>\" + key + \"</th>\";\n                    }\n                    conversationhtml=conversationhtml + \"<td>\" + item[key] + \"</td>\";\n                });\n                conversationhtml = conversationhtml + \"</tr>\";\n                if(!foundTableHeader) {\n                    tableHeader = \"<tr>\" + tableHeader + \"</tr>\";\n                }\n                foundTableHeader=true;\n            }\n           \n            \n            conversationhtml = tableHeader + conversationhtml + \"</table>\";\n            body = body + conversationhtml;\n            \n        } else {\n            \n            body=body + \"<div><div style=\\\"min-width: 180px;display: inline-block;\\\">\" +conversationItem['user']+\"<span>:\" +conversationItem['text']+\"</span></div>\";\n        }\n    }\n}\n\n\nreturn {\n    payload: body,\n    topic: msg.payload.subject,\n    to: msg.payload.to\n    \n};",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 110,
+    "y": 320,
+    "wires": [
+      [
+        "289dc747.937788"
+      ]
+    ]
+  },
+  {
+    "id": "99ad9d02.5d24d",
+    "type": "debug",
+    "z": "125f39db.0fb4a6",
+    "name": "reply to facebook",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "x": 970,
+    "y": 760,
+    "wires": []
+  },
+  {
+    "id": "41b58767.0ce148",
+    "type": "http response",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 610,
+    "y": 460,
+    "wires": []
+  },
+  {
+    "id": "c717ba3e.5880c8",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "subscribe",
+    "func": "var mode = ''; \nvar vtoken = '';\nvar challenge = '';\nif (msg.payload['hub.mode']) { mode = msg.payload['hub.mode']; } \nif (msg.payload['hub.verify_token'])\n{ \n    vtoken = msg.payload['hub.verify_token']; \n    \n}\nif (msg.payload['hub.challenge']) { \n    challenge = msg.payload['hub.challenge']; \n    \n} \nif ('subscribe' == mode && 'demoapp' == vtoken)\n{\n    msg.payload = challenge;\n    } \n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 440,
+    "y": 460,
+    "wires": [
+      [
+        "41b58767.0ce148"
+      ]
+    ]
+  },
+  {
+    "id": "bb00807b.8afc",
+    "type": "http in",
+    "z": "125f39db.0fb4a6",
+    "name": "Messenger Verification Webhook",
+    "url": "/mybot",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 460,
+    "wires": [
+      [
+        "c717ba3e.5880c8"
+      ]
+    ]
+  },
+  {
+    "id": "2f2191bf.ef8e3e",
+    "type": "http in",
+    "z": "125f39db.0fb4a6",
+    "name": "Messenger chat listener",
+    "url": "/mybot",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 160,
+    "y": 640,
+    "wires": [
+      [
+        "cce0a551.1190e8"
+      ]
+    ]
+  },
+  {
+    "id": "cce0a551.1190e8",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "listen",
+    "func": "if (msg.payload.object && 'page' == msg.payload.object) {\n    if (msg.payload.entry){\n        var entry = msg.payload.entry;\n        for (var i = 0; i < entry.length; i++) {\n            var pageID = entry[i].id; \n            var timeOfEvent = entry[i].time;\n            var messaging = entry[i].messaging;\n            for (var j =0; j < messaging.length; j++) { if (messaging[j].message) { msg.messagingEvent = messaging[j];\nnode.send([msg,null]);\n} } } } } \nreturn [null,msg];",
+    "outputs": 2,
+    "noerr": 0,
+    "x": 390,
+    "y": 640,
+    "wires": [
+      [
+        "32a671a3.9bc2be"
+      ],
+      [
+        "b0c18c77.820e6"
+      ]
+    ]
+  },
+  {
+    "id": "32a671a3.9bc2be",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "msg.payload=msg.payload.entry[0].messaging[0].message.text\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 570,
+    "y": 600,
+    "wires": [
+      [
+        "393b04b3.c1963c"
+      ]
+    ]
+  },
+  {
+    "id": "b0c18c77.820e6",
+    "type": "http response",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 570,
+    "y": 660,
+    "wires": []
+  },
+  {
+    "id": "c0124e6c.33885",
+    "type": "change",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "rules": [
+      {
+        "t": "set",
+        "p": "city",
+        "pt": "msg",
+        "to": "geocity",
+        "tot": "msg"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 490,
+    "y": 240,
+    "wires": [
+      [
+        "a4138c85.54802"
+      ]
+    ]
+  },
+  {
+    "id": "b89f5edd.9a371",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var response=msg._dialogflow;\nvar geocity='';\nvar smalltalk='';\nvar switchcase='default';\n\nif(response) {\n     let cityRes =  ((((response || {}).parameters || {}).fields || {})['geo-city']|| {}).stringValue;\n     let smallTalkResp =  (response || {}).fulfillmentText;\n     if(cityRes) {\n        geocity = cityRes;\n        switchcase = 'city';\n     } else if(smallTalkResp) {\n         smalltalk = smallTalkResp;\n         switchcase = 'smalltalk';\n     }\n}\n\nreturn {\n    payload: msg.payload,\n    geocity: geocity,\n    smalltalk: smalltalk,\n    switchcase: switchcase,\n    userId:msg.userId\n};\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 670,
+    "y": 160,
+    "wires": [
+      [
+        "f869129e.c7195"
+      ]
+    ]
+  },
+  {
+    "id": "fa9d6ef.3a4a89",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var message=\"Sorry, Could you please try again?\";\nif(msg) {\n     let dialogflowRes =  (((msg || {}).payload || {}).main|| {}).temp;\n     if(dialogflowRes) {\n        var temp=Math.round(dialogflowRes - 273.15);\n        message=\"The weather in \"+ msg.city +\" is \" + temp+\"°C\";   \n     }\n}\n\n\n\n\nreturn {\n    payload: {data :message,\n            userId: msg.userId\n    }\n};\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 870,
+    "y": 240,
+    "wires": [
+      [
+        "c8a5079d.8c91a8"
+      ]
+    ]
+  },
+  {
+    "id": "f869129e.c7195",
+    "type": "switch",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "property": "switchcase",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "city",
+        "vt": "str"
+      },
+      {
+        "t": "else"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 290,
+    "y": 260,
+    "wires": [
+      [
+        "c0124e6c.33885"
+      ],
+      [
+        "5db10d55.85b4e4"
+      ]
+    ]
+  },
+  {
+    "id": "5db10d55.85b4e4",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var message=\"Sorry, Could you please try again?\";\n\nif(msg.smalltalk) {\n    message=msg.smalltalk;\n}\n\nreturn {\n    payload: {data :msg.payload,\n            userId: msg.userId\n    }\n};",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 490,
+    "y": 320,
+    "wires": [
+      [
+        "c8a5079d.8c91a8"
+      ]
+    ]
+  },
+  {
+    "id": "da83fde.094a6",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var message=\"Sorry, Could you please try again?\";\nif(msg) {\n     let dialogflowRes =  (((msg || {}).payload || {}).main|| {}).temp;\n     if(dialogflowRes) {\n        var temp=Math.round(dialogflowRes - 273.15);\n        message=\"The weather in \"+ msg.city +\" is \" + temp+\"°C\";   \n     }\n}\n\nreturn {\n    payload: message,\n    facebookevent : msg.facebookevent\n};\n\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 730,
+    "y": 760,
+    "wires": [
+      [
+        "5993bd5d.1f3934"
+      ]
+    ]
+  },
+  {
+    "id": "289ac145.9b9ede",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var message=\"Sorry, Could you please try again?\";\n\nif(msg.smalltalk) {\n    message=msg.smalltalk;\n}\n\nreturn {\n    payload: message,\n    facebookevent : msg.facebookevent\n};",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 330,
+    "y": 840,
+    "wires": [
+      [
+        "5993bd5d.1f3934"
+      ]
+    ]
+  },
+  {
+    "id": "a48d9303.da708",
+    "type": "switch",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "property": "switchcase",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "city",
+        "vt": "str"
+      },
+      {
+        "t": "else"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 150,
+    "y": 780,
+    "wires": [
+      [
+        "ca053958.5e86b8"
+      ],
+      [
+        "289ac145.9b9ede"
+      ]
+    ]
+  },
+  {
+    "id": "c29cdc9d.54f51",
+    "type": "http request",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "method": "GET",
+    "ret": "obj",
+    "url": "http://api.openweathermap.org/data/2.5/weather?q={{city}}&appid=",
+    "tls": "",
+    "x": 550,
+    "y": 760,
+    "wires": [
+      [
+        "da83fde.094a6"
+      ]
+    ]
+  },
+  {
+    "id": "ca053958.5e86b8",
+    "type": "change",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "rules": [
+      {
+        "t": "set",
+        "p": "city",
+        "pt": "msg",
+        "to": "geocity",
+        "tot": "msg"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 350,
+    "y": 760,
+    "wires": [
+      [
+        "c29cdc9d.54f51"
+      ]
+    ]
+  },
+  {
+    "id": "aa436546.0ac688",
+    "type": "function",
+    "z": "125f39db.0fb4a6",
+    "name": "",
+    "func": "var response=msg._dialogflow;\nvar geocity='';\nvar smalltalk='';\nvar switchcase='default';\n\nif(response) {\n     let cityRes =  ((((response || {}).parameters || {}).fields || {})['geo-city']|| {}).stringValue;\n     let smallTalkResp =  (response || {}).fulfillmentText;\n     if(cityRes) {\n        geocity = cityRes;\n        switchcase = 'city';\n     } else if(smallTalkResp) {\n         smalltalk = smallTalkResp;\n         switchcase = 'smalltalk';\n     }\n}\n\nreturn {\n    payload: msg.payload,\n    geocity: geocity,\n    smalltalk: smalltalk,\n    switchcase: switchcase,\n    facebookevent : msg.messagingEvent\n};\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 930,
+    "y": 640,
+    "wires": [
+      [
+        "a48d9303.da708"
+      ]
+    ]
+  },
+  {
+    "id": "ebc158ef.02f548",
+    "type": "dialogflowv2",
+    "z": "125f39db.0fb4a6",
+    "dialogflow": "563efe99.898d2",
+    "language": "en",
+    "debug": false,
+    "variable": "topic",
+    "x": 480,
+    "y": 160,
+    "wires": [
+      [
+        "b89f5edd.9a371"
+      ]
+    ]
+  },
+  {
+    "id": "393b04b3.c1963c",
+    "type": "dialogflowv2",
+    "z": "125f39db.0fb4a6",
+    "dialogflow": "563efe99.898d2",
+    "language": "en",
+    "debug": false,
+    "variable": "topic",
+    "x": 740,
+    "y": 640,
+    "wires": [
+      [
+        "aa436546.0ac688"
+      ]
+    ]
+  },
+  {
+    "id": "5993bd5d.1f3934",
+    "type": "facebook-messenger-writer",
+    "z": "125f39db.0fb4a6",
+    "name": "demochatapp",
+    "x": 900,
+    "y": 840,
+    "wires": [
+      [
+        "99ad9d02.5d24d"
+      ]
+    ]
+  },
+  {
+    "id": "c0fb4b0b.8e7938",
+    "type": "websocket-listener",
+    "z": "125f39db.0fb4a6",
+    "path": "/receive",
+    "wholemsg": "false"
+  },
+  {
+    "id": "d0d35c36.acfd1",
+    "type": "websocket-listener",
+    "z": "",
+    "path": "/publish",
+    "wholemsg": "false"
+  },
+  {
+    "id": "563efe99.898d2",
+    "type": "dialogflowv2-token",
+    "z": 0,
+    "name": "test"
+  }
+]
