@@ -71,7 +71,7 @@
     "name": "",
     "method": "GET",
     "ret": "obj",
-    "url": "http://api.openweathermap.org/data/2.5/weather?q={{city}}&appid=2ffbebbb851fb9abc0bb280f3659f86c",
+    "url": "http://api.openweathermap.org/data/2.5/weather?q={{city}}&appid=",
     "tls": "",
     "x": 690,
     "y": 240,
@@ -299,7 +299,7 @@
     "func": "var response=msg._dialogflow;\nvar geocity='';\nvar smalltalk='';\nvar switchcase='default';\n\nif(response) {\n     let cityRes =  ((((response || {}).parameters || {}).fields || {})['geo-city']|| {}).stringValue;\n     let smallTalkResp =  (response || {}).fulfillmentText;\n     if(cityRes) {\n        geocity = cityRes;\n        switchcase = 'city';\n     } else if(smallTalkResp) {\n         smalltalk = smallTalkResp;\n         switchcase = 'smalltalk';\n     }\n}\n\nreturn {\n    payload: msg.payload,\n    geocity: geocity,\n    smalltalk: smalltalk,\n    switchcase: switchcase,\n    userId:msg.userId\n};\n",
     "outputs": 1,
     "noerr": 0,
-    "x": 670,
+    "x": 710,
     "y": 160,
     "wires": [
       [
@@ -359,7 +359,7 @@
     "type": "function",
     "z": "125f39db.0fb4a6",
     "name": "",
-    "func": "var message=\"Sorry, Could you please try again?\";\n\nif(msg.smalltalk) {\n    message=msg.smalltalk;\n}\n\nreturn {\n    payload: {data :msg.payload,\n            userId: msg.userId\n    }\n};",
+    "func": "var message=\"Sorry, Could you please try again?\";\n\nif(msg.smalltalk) {\n    message=msg.smalltalk;\n}\n\nreturn {\n    payload: {data :message,\n            userId: msg.userId\n    }\n};",
     "outputs": 1,
     "noerr": 0,
     "x": 490,
