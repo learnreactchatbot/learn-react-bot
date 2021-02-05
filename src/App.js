@@ -26,7 +26,7 @@ class App extends Component {
   startListenerWebSocketClient() {
     this.listenSocket = new WebSocket("wss://learn-react-bot-node-flow.herokuapp.com/publish");
     this.listenSocket.onopen = () => {
-      console.log('connected')
+      console.log('connected');
     }
     function convertToMessage(str) {
           let convertedMessage='';
